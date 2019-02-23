@@ -1,0 +1,72 @@
+import cv2
+import numpy as np
+%pylab inline
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+
+
+# Load the image
+
+image_name = '027_064_002.jpg'
+
+img = cv2.imread(image_name)
+imgplot = plt.imshow(img)
+plt.show()
+
+# convert to grayscale
+gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+imgplot = plt.imshow(gray)
+plt.show()
+
+# smooth the image to avoid noises
+gray = cv2.medianBlur(gray,5)
+imgplot = plt.imshow(gray)
+plt.show()
+
+# Apply adaptive threshold
+thresh = cv2.adaptiveThreshold(gray,255,1,1,11,2)
+thresh_color = cv2.cvtColor(thresh,cv2.COLOR_GRAY2BGR)
+
+imgplot = plt.imshow(thresh)
+plt.show()
+
+# apply some dilation and erosion to join the gaps
+thresh = cv2.dilate(thresh,None,iterations = 3)
+thresh = cv2.erode(thresh,None,iterations = 2)
+
+imgplot = plt.imshow(thresh)
+plt.show()
+
+# Find the contours
+_,contours,hierarchy = cv2.findContours(thresh,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
+
+print(len(contours))
+
+#imgplot = plt.imshow(contours)
+#plt.show()
+
+# For each contour, find the bounding rectangle and draw it
+counter = 0
+
+min_height = 20 # in pixels???
+max_height = 120
+min_width = 10
+max_width = 600
+
+for cnt in contours:
+    x,y,w,h = cv2.boundingRect(cnt)
+    if h >= min_height and h <= max_height and w >= min_width and w <= max_width:
+        #cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
+        #cv2.rectangle(thresh_color,(x,y),(x+w,y+h),(0,255,0),2)
+        word = img[y:y+h,x:x+w]
+        counter = counter + 1
+        cv2.imwrite(str(counter) + ".png", word)
+        
+# Finally show the image
+img = cv2.resize(img, (1580, 1500))
+thresh_color = cv2.resize(thresh_color, (1580, 1500))
+
+cv2.imshow('img',img)
+cv2.imshow('res',thresh_color)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
